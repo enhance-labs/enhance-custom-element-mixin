@@ -1,6 +1,6 @@
 {
   "name": "@enhance-labs/custom-element-mixin",
-  "version": "1.0.1",
+  "version": "1.0.2-beta.0",
   "description": "Custom Element mixin that enables the reuse of single file components",
   "main": "index.mjs",
   "scripts": {
