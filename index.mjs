@@ -51,10 +51,16 @@ const CustomElementMixin = (superclass) => class extends superclass {
     this.template.content.querySelectorAll('script')
       .forEach((tag) => { this.template.content.removeChild(tag) })
 
+    // Expands the Custom Element with the template content
+    const hasSlots = this.template.content.querySelectorAll('slot')?.length
+    const enhanced = this.hasAttribute('enhanced')
+
     // If the Custom Element was already expanded by SSR it will have the "enhanced" attribute so do not replaceChildren
-    if (!this.hasAttribute('enhanced')) {
+    if (!enhanced && !hasSlots) {
       // If this Custom Element was added dynamically with JavaScript then use the template contents to expand the element
       this.replaceChildren(this.template.content.cloneNode(true))
+    } else if (!enhanced && hasSlots) {
+      this.innerHTML = expandSlots(this)
     }
   }
 
@@ -67,5 +73,51 @@ const CustomElementMixin = (superclass) => class extends superclass {
 
     return styleElement.sheet.cssRules
   }
+
+
+  expandSlots(here) {
+    const fragment = document.createElement('div')
+    fragment.innerHTML = here.innerHTML
+    fragment.attachShadow({ mode: 'open' }).appendChild(
+      here.template.content.cloneNode(true)
+    )
+
+    const children = Array.from(fragment.childNodes)
+    let unnamedSlot = {}
+    let namedSlots = {}
+
+    children.forEach(child => {
+      const slot = child.assignedSlot
+      if (slot) {
+        if (slot.name) {
+          if (!namedSlots[slot.name]) namedSlots[slot.name] = { slotNode: slot, contentToSlot: [] }
+          namedSlots[slot.name].contentToSlot.push(child)
+        } else {
+          if (!unnamedSlot["slotNode"]) unnamedSlot = { slotNode: slot, contentToSlot: [] }
+          unnamedSlot.contentToSlot.push(child.innerHTML || child.textContent || '')
+        }
+      }
+    })
+
+    // Named Slots
+    Object.entries(namedSlots).forEach(([name, slot]) => {
+      slot.slotNode.after(...namedSlots[name].contentToSlot)
+      slot.slotNode.remove()
+    })
+
+    // Unnamed Slot
+    unnamedSlot.slotNode?.replaceWith(unnamedSlot?.contentToSlot.join(''))
+
+    // Unused slots and default content 
+    const unfilledUnnamedSlots = Array.from(fragment.shadowRoot.querySelectorAll('slot:not([name])'))
+    const unfilledSlots = Array.from(fragment.shadowRoot.querySelectorAll('slot[name]'))
+    unfilledSlots.forEach(slot => {
+      slot.after(...slot.childNodes)
+      slot.remove()
+    })
+
+    return fragment.shadowRoot.innerHTML
+  }
+
 }
 export default CustomElementMixin
