@@ -4,7 +4,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
     super()
     // Removes style tags as they are already inserted into the head by SSR
     // TODO: If only added dynamically in the browser we need to insert the style tag after running the style transform on it. As well as handle deduplication.
-    let tagName = customElements.getName(this.constructor)
+    let tagName = customElements.getName ? customElements.getName(this.constructor) : this.registeredName
     this.template.content.querySelectorAll('style')
       .forEach((tag) => {
         const rules = this.rulesForCssText(tag.textContent)
