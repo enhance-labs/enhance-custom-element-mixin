@@ -14,7 +14,11 @@ const CustomElementMixin = (superclass) => class extends superclass {
     } else {
       let tagName = customElements.getName ? customElements.getName(this.constructor) : this.registeredName
       this.template.content.querySelectorAll('style')
-        .forEach((tag) => this.styleTransform({ tag, tagName }))
+        .forEach((tag) => {
+          let sheet = this.styleTransform({ tag, tagName})
+          document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
+          this.template.content.removeChild(tag)
+      })
     }
 
     // Removes script tags as they are already appended to the body by SSR
@@ -69,9 +73,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
       }
     }
     console.log(sheet)
-    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
-
-    this.template.content.removeChild(tag)
+    return sheet
   }
 
   rulesForCssText(styleContent) {
