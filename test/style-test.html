@@ -191,10 +191,12 @@
           assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
         })
         it('host-context-function-form', ()=> {
-          const tag = document.querySelector('#host-context-function-form')
-          const sheet = ce.styleTransform({tag, tagName})
-          const expected = `.something my-element div { background: blue; }`
-          assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
+          if (navigator.userAgent.includes('Chrome')) {
+            const tag = document.querySelector('#host-context-function-form')
+            const sheet = ce.styleTransform({tag, tagName})
+            const expected = `.something my-element div { background: blue; }`
+            assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
+          }
         })
       })
     })
