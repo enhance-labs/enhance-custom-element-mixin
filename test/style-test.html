@@ -116,12 +116,12 @@
       describe('StyleTransform', ()=> {
         it('global in ssr context', ()=> {
           const tag = document.querySelector('#global-in-ssr-context')
-          const sheet = ce.styleTransform({tag, tagName})
+          const sheet = ce.styleTransform({tag, tagName, scope: 'global'})
           assert.equal(sheet.cssRules[0].cssText, 'div { background: blue; }', 'it works')
         })
         it('global in template context', ()=> {
           const tag = document.querySelector('#global-in-template-context')
-          const sheet = ce.styleTransform({tag, tagName})
+          const sheet = ce.styleTransform({tag, tagName, scope: 'global'})
           assert.equal(sheet.cssRules[0].cssText, 'div { background: blue; }', 'it works')
         })
         it('default component scoped in ssr context', ()=> {
@@ -133,9 +133,7 @@
           const tag = document.querySelector('#container-rules-scoped-in-ssr-context')
           const sheet = ce.styleTransform({tag, tagName})
           const expected = `@container (min-inline-size: 48em) {
-  my-element div {
-    background: blue;
-  }
+  my-element div { background: blue; }
 }`
           assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
         })
@@ -151,9 +149,7 @@
           const tag = document.querySelector('#supports-rules-scoped-in-ssr-context')
           const sheet = ce.styleTransform({tag, tagName})
           const expected = `@supports (display: block) {
-  my-element div {
-    background: blue;
-  }
+  my-element div { background: blue; }
 }`
           assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
         })
@@ -166,16 +162,11 @@
         it('template-context-with-shadow-selectors-should-not-change', ()=> {
           const tag = document.querySelector('#template-context-with-shadow-selectors-should-not-change')
           const sheet = ce.styleTransform({tag, tagName})
-          const expected = `:host { background:blue; }
-    .container > ::slotted(*) {
-      display: block;
-    }
-    .container > ::slotted(*[slot="title"]) {
-      display: block;
-    }
-    .foo { display: block; }
-    another-tag::part(thing) { display: block; }`
-          assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
+          assert.equal(sheet.cssRules[0].cssText, ':host { background:blue; }', 'it works')
+          assert.equal(sheet.cssRules[1].cssText, '.container > ::slotted(*) { display: block; }', 'it works')
+          assert.equal(sheet.cssRules[2].cssText, '.container > ::slotted(*[slot="title"]) { display: block; }', 'it works')
+          assert.equal(sheet.cssRules[3].cssText, '.foo { display: block; }', 'it works')
+          assert.equal(sheet.cssRules[4].cssText, 'another-tag::part(thing) { display: block; }', 'it works')
         })
         it('ssr-context-with-special-selectors', ()=> {
           const tag = document.querySelector('#ssr-context-with-special-selectors')
@@ -195,17 +186,13 @@
         it('host-function-form', ()=> {
           const tag = document.querySelector('#host-function-form')
           const sheet = ce.styleTransform({tag, tagName})
-          const expected = `my-element.something div {
-  background: blue;
-}`
+          const expected = `my-element.something div { background: blue; }`
           assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
         })
         it('host-context-function-form', ()=> {
           const tag = document.querySelector('#host-context-function-form')
           const sheet = ce.styleTransform({tag, tagName})
-          const expected = `.something my-element div {
-  background: blue;
-}`
+          const expected = `.something my-element div { background: blue; }`
           assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
         })
       })
