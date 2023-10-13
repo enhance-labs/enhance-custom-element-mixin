@@ -12,7 +12,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
       this.template.content.querySelectorAll('style')
         .forEach((tag) => { this.template.content.removeChild(tag) })
     } else {
-      let tagName = customElements.getName ? customElements.getName(this.constructor) : this.registeredName
+      let tagName = customElements.getName ? customElements.getName(this.constructor) : this.toKebabCase(this.constructor.name)
       this.template.content.querySelectorAll('style')
         .forEach((tag) => {
           let sheet = this.styleTransform({ tag, tagName, scope: tag.getAttribute('scope')})
@@ -36,6 +36,10 @@ const CustomElementMixin = (superclass) => class extends superclass {
     } else if (!enhanced && hasSlots) {
       this.innerHTML = this.expandSlots(this)
     }
+  }
+
+  toKebabCase(str) {
+    return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase()
   }
 
   styleTransform({tag, tagName, scope}) {
