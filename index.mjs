@@ -14,7 +14,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
     } else {
       let tagName = customElements.getName ? customElements.getName(this.constructor) : this.registeredName
       this.template.content.querySelectorAll('style')
-        .forEach((tag) => this.styleTransform({ tag, tagName}))
+        .forEach((tag) => this.styleTransform({ tag, tagName }))
     }
 
     // Removes script tags as they are already appended to the body by SSR
@@ -26,15 +26,15 @@ const CustomElementMixin = (superclass) => class extends superclass {
     const hasSlots = this.template.content.querySelectorAll('slot')?.length
 
     // If the Custom Element was already expanded by SSR it will have the "enhanced" attribute so do not replaceChildren
+    // If this Custom Element was added dynamically with JavaScript then use the template contents to expand the element
     if (!enhanced && !hasSlots) {
-      // If this Custom Element was added dynamically with JavaScript then use the template contents to expand the element
       this.replaceChildren(this.template.content.cloneNode(true))
     } else if (!enhanced && hasSlots) {
       this.innerHTML = expandSlots(this)
     }
   }
 
-  styleTransform({tag, tagName}) {
+  styleTransform({ tag, tagName }) {
     const rules = this.rulesForCssText(tag.textContent)
     console.log(rules)
 
@@ -104,7 +104,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
           namedSlots[slot.name].contentToSlot.push(child)
         } else {
           if (!unnamedSlot["slotNode"]) unnamedSlot = { slotNode: slot, contentToSlot: [] }
-          unnamedSlot.contentToSlot.push(child.innerHTML || child.textContent || '')
+          unnamedSlot.contentToSlot.push(child)
         }
       }
     })
@@ -116,10 +116,12 @@ const CustomElementMixin = (superclass) => class extends superclass {
     })
 
     // Unnamed Slot
-    unnamedSlot.slotNode?.replaceWith(unnamedSlot?.contentToSlot.join(''))
+    unnamedSlot.slotNode.after(...unnamedSlot.contentToSlot)
+    unnamedSlot.slotNode.remove()
 
     // Unused slots and default content
     const unfilledUnnamedSlots = Array.from(fragment.shadowRoot.querySelectorAll('slot:not([name])'))
+    unfilledUnnamedSlots.forEach(slot => slot.remove())
     const unfilledSlots = Array.from(fragment.shadowRoot.querySelectorAll('slot[name]'))
     unfilledSlots.forEach(slot => {
       slot.after(...slot.childNodes)
