@@ -30,7 +30,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
     if (!enhanced && !hasSlots) {
       this.replaceChildren(this.template.content.cloneNode(true))
     } else if (!enhanced && hasSlots) {
-      this.innerHTML = expandSlots(this)
+      this.innerHTML = this.expandSlots(this)
     }
   }
 
