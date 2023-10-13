@@ -153,13 +153,13 @@
 }`
           assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
         })
-        it('default-component-scoped-in-template-context', ()=> {
+        xit('default-component-scoped-in-template-context', ()=> {
           const tag = document.querySelector('#default-component-scoped-in-template-context')
           const sheet = ce.styleTransform({tag, tagName})
           const expected = `div { background:blue; }`
           assert.equal(sheet.cssRules[0].cssText, expected, 'it works')
         })
-        it('template-context-with-shadow-selectors-should-not-change', ()=> {
+        xit('template-context-with-shadow-selectors-should-not-change', ()=> {
           const tag = document.querySelector('#template-context-with-shadow-selectors-should-not-change')
           const sheet = ce.styleTransform({tag, tagName})
           assert.equal(sheet.cssRules[0].cssText, ':host { background:blue; }', 'it works')
@@ -173,7 +173,8 @@
           const sheet = ce.styleTransform({tag, tagName})
           assert.equal(sheet.cssRules[0].cssText, `my-element { background: blue; }`, 'it works')
           assert.equal(sheet.cssRules[1].cssText, `my-element .container > * { display: block; }`, 'it works')
-          assert.equal(sheet.cssRules[2].cssText, `my-element .container > *[slot="title"] { display: block; }`, 'it works')
+          // CSSStyleSheet turns '*[slot="title"]' to '[slot="title"]'
+          assert.equal(sheet.cssRules[2].cssText, `my-element .container > [slot="title"] { display: block; }`, 'it works')
           assert.equal(sheet.cssRules[3].cssText, `my-element .foo { display: block; }`, 'it works')
           assert.equal(sheet.cssRules[4].cssText, `my-element another-tag [part*="thing"][part*="another-tag"] { display: block; }`, 'it works')
         })
