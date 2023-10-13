@@ -15,7 +15,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
       let tagName = customElements.getName ? customElements.getName(this.constructor) : this.registeredName
       this.template.content.querySelectorAll('style')
         .forEach((tag) => {
-          let sheet = this.styleTransform({ tag, tagName})
+          let sheet = this.styleTransform({ tag, tagName, scope: tag.getAttribute('scope')})
           document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
           this.template.content.removeChild(tag)
       })
@@ -38,10 +38,14 @@ const CustomElementMixin = (superclass) => class extends superclass {
     }
   }
 
-  styleTransform({ tag, tagName }) {
-    const rules = this.rulesForCssText(tag.textContent)
-    console.log(rules)
+  styleTransform({tag, tagName, scope}) {
+    const styles = this.parseCSS(tag.textContent)
 
+    if (scope === 'global') {
+      return styles
+    }
+
+    const rules = styles.cssRules
     const sheet = new CSSStyleSheet();
     for (let rule of rules) {
       if (rule.conditionText) {
@@ -49,41 +53,50 @@ const CustomElementMixin = (superclass) => class extends superclass {
         for (let innerRule of rule.cssRules) {
           let selectors = innerRule.selectorText.split(',')
           selectorText = selectors.map(selector => {
-            if (selector.startsWith(':host')) {
-              let a = selector.replace(':host', tagName)
-              return innerRule.cssText.replace(innerRule.selectorText, a)
-            } else {
-              let a = `${tagName} ${selector}`
-              return innerRule.cssText.replace(innerRule.selectorText, a)
-            }
+            return innerRule.cssText.replace(innerRule.selectorText, this.#transform(selector, tagName))
           }).join(',')
         }
-        console.log(`${rule.media ? '@media' : ''} ${rule.conditionText} { ${selectorText}}`)
-        sheet.insertRule(`${rule.media ? '@media' : ''} ${rule.conditionText} { ${selectorText}}`, sheet.cssRules.length)
+        let type = null
+        if (rule instanceof CSSContainerRule) {
+          type = '@container'
+        } else if (rule instanceof CSSMediaRule) {
+          type = '@media'
+        } else if (rule instanceof CSSSupportsRule) {
+          type = '@supports'
+        }
+        sheet.insertRule(`${type} ${rule.conditionText} { ${selectorText}}`, sheet.cssRules.length)
       } else {
         let selectors = rule.selectorText.split(',')
         let selectorText = selectors.map(selector => {
-          if (selector.startsWith(':host')) {
-            return selector.replace(':host', tagName)
-          } else {
-            return `${tagName} ${selector}`
-          }
+          return this.#transform(selector, tagName)
         }).join(',')
         sheet.insertRule(rule.cssText.replace(rule.selectorText, selectorText), sheet.cssRules.length)
       }
     }
-    console.log(sheet)
     return sheet
   }
 
-  rulesForCssText(styleContent) {
+  #transform(input, tagName) {
+    let out = input
+    out = out.replace(/(::slotted)\(\s*(.+)\s*\)/, '$2')
+      .replace(/(:host-context)\(\s*(.+)\s*\)/, '$2 __TAGNAME__')
+      .replace(/(:host)\(\s*(.+)\s*\)/, '__TAGNAME__$2')
+      .replace(
+        /([[a-zA-Z0-9_-]*)(::part)\(\s*(.+)\s*\)/,
+        '$1 [part*="$3"][part*="$1"]')
+      .replace(':host', '__TAGNAME__')
+    out = /__TAGNAME__/.test(out) ?  out.replace(/(.*)__TAGNAME__(.*)/,`$1${tagName}$2`) : `${tagName} ${out}`
+    return out
+  }
+
+  parseCSS(styleContent) {
     const doc = document.implementation.createHTMLDocument("")
     const styleElement = document.createElement("style")
 
     styleElement.textContent = styleContent
     doc.body.appendChild(styleElement)
 
-    return styleElement.sheet.cssRules
+    return styleElement.sheet
   }
 
 
