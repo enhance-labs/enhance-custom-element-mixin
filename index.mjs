@@ -60,14 +60,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
             return innerRule.cssText.replace(innerRule.selectorText, this.#transform(selector, tagName))
           }).join(',')
         }
-        let type = null
-        if (rule instanceof CSSContainerRule) {
-          type = '@container'
-        } else if (rule instanceof CSSMediaRule) {
-          type = '@media'
-        } else if (rule instanceof CSSSupportsRule) {
-          type = '@supports'
-        }
+        let type = this.#getRuleType(rule)
         sheet.insertRule(`${type} ${rule.conditionText} { ${selectorText}}`, sheet.cssRules.length)
       } else {
         let selectors = rule.selectorText.split(',')
@@ -78,6 +71,19 @@ const CustomElementMixin = (superclass) => class extends superclass {
       }
     }
     return sheet
+  }
+
+  #getRuleType(rule) {
+    switch(rule.constructor) {
+      case CSSContainerRule:
+        return '@container'
+      case CSSMediaRule:
+        return '@media'
+      case CSSSupportsRule:
+        return '@supports'
+      default:
+        return null
+    }
   }
 
   #transform(input, tagName) {
