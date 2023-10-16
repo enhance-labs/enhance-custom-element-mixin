@@ -15,10 +15,10 @@ const CustomElementMixin = (superclass) => class extends superclass {
       let tagName = customElements.getName ? customElements.getName(this.constructor) : this.toKebabCase(this.constructor.name)
       this.template.content.querySelectorAll('style')
         .forEach((tag) => {
-          let sheet = this.styleTransform({ tag, tagName, scope: tag.getAttribute('scope')})
+          let sheet = this.styleTransform({ tag, tagName, scope: tag.getAttribute('scope') })
           document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
           this.template.content.removeChild(tag)
-      })
+        })
     }
 
     // Removes script tags as they are already appended to the body by SSR
@@ -42,7 +42,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
     return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase()
   }
 
-  styleTransform({tag, tagName, scope}) {
+  styleTransform({ tag, tagName, scope }) {
     const styles = this.parseCSS(tag.textContent)
 
     if (scope === 'global') {
@@ -89,7 +89,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
         /([[a-zA-Z0-9_-]*)(::part)\(\s*(.+)\s*\)/,
         '$1 [part*="$3"][part*="$1"]')
       .replace(':host', '__TAGNAME__')
-    out = /__TAGNAME__/.test(out) ?  out.replace(/(.*)__TAGNAME__(.*)/,`$1${tagName}$2`) : `${tagName} ${out}`
+    out = /__TAGNAME__/.test(out) ? out.replace(/(.*)__TAGNAME__(.*)/, `$1${tagName}$2`) : `${tagName} ${out}`
     return out
   }
 
@@ -135,15 +135,20 @@ const CustomElementMixin = (superclass) => class extends superclass {
     })
 
     // Unnamed Slot
-    unnamedSlot.slotNode.after(...unnamedSlot.contentToSlot)
-    unnamedSlot.slotNode.remove()
+    unnamedSlot.slotNode?.after(...unnamedSlot.contentToSlot)
+    unnamedSlot.slotNode?.remove()
 
     // Unused slots and default content
     const unfilledUnnamedSlots = Array.from(fragment.shadowRoot.querySelectorAll('slot:not([name])'))
     unfilledUnnamedSlots.forEach(slot => slot.remove())
     const unfilledSlots = Array.from(fragment.shadowRoot.querySelectorAll('slot[name]'))
     unfilledSlots.forEach(slot => {
-      slot.after(...slot.childNodes)
+      const as = slot.getAttribute('as') || 'span'
+      const asElement = document.createElement(as)
+      while (slot.childNodes.length > 0) {
+        asElement.appendChild(slot.childNodes[0]);
+      }
+      slot.after(asElement)
       slot.remove()
     })
 
