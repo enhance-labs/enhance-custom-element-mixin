@@ -25,6 +25,7 @@
         </style>
         <slot></slot>
         <slot name=one>Default One</slot>
+        <slot as=div name=two>Default Two</slot>
       `
     }
 
@@ -45,9 +46,13 @@
       describe('CustomElementMixin Slots', ()=> {
         it('default named content should show', ()=> {
           const testComponent = document.querySelector('my-element')
-          console.log(testComponent)
           const textContent = testComponent.querySelector('span').textContent
-          assert.equal(textContent, 'Default One', 'Should expand template with heading')
+          assert.equal(textContent, 'Default One', 'Should expand default slots')
+        })
+        it('slot as attribute should render', ()=> {
+          const testComponent = document.querySelector('my-element')
+          const textContent = testComponent.querySelector('div').textContent
+          assert.equal(textContent, 'Default Two', 'Should use as attribute')
         })
         it('empty unnamed slot should disappear', ()=> {
           const testComponent = document.querySelector('my-element')
