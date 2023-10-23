@@ -57,15 +57,15 @@ const CustomElementMixin = (superclass) => class extends superclass {
         for (let innerRule of rule.cssRules) {
           let selectors = innerRule.selectorText.split(',')
           selectorText = selectors.map(selector => {
-            return innerRule.cssText.replace(innerRule.selectorText, this.#transform(selector, tagName))
+            return innerRule.cssText.replace(innerRule.selectorText, this.transform(selector, tagName))
           }).join(',')
         }
-        let type = this.#getRuleType(rule)
+        let type = this.getRuleType(rule)
         sheet.insertRule(`${type} ${rule.conditionText} { ${selectorText}}`, sheet.cssRules.length)
       } else {
         let selectors = rule.selectorText.split(',')
         let selectorText = selectors.map(selector => {
-          return this.#transform(selector, tagName)
+          return this.transform(selector, tagName)
         }).join(',')
         sheet.insertRule(rule.cssText.replace(rule.selectorText, selectorText), sheet.cssRules.length)
       }
@@ -73,8 +73,8 @@ const CustomElementMixin = (superclass) => class extends superclass {
     return sheet
   }
 
-  #getRuleType(rule) {
-    switch(rule.constructor) {
+  getRuleType(rule) {
+    switch (rule.constructor) {
       case CSSContainerRule:
         return '@container'
       case CSSMediaRule:
@@ -86,7 +86,7 @@ const CustomElementMixin = (superclass) => class extends superclass {
     }
   }
 
-  #transform(input, tagName) {
+  transform(input, tagName) {
     let out = input
     out = out.replace(/(::slotted)\(\s*(.+)\s*\)/, '$2')
       .replace(/(:host-context)\(\s*(.+)\s*\)/, '$2 __TAGNAME__')
